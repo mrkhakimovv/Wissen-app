@@ -1,0 +1,149 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents an admin or a student.",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "description": "Unique username" },
+        "accessCode": { "type": "string", "description": "Hashed or plain PIN" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "student"] },
+        "groupId": { "type": "string", "description": "Allowed to be empty for admins" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["username", "accessCode", "fullName", "phone", "role", "createdAt"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Class or group of students.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "studentIds": { "type": "array", "items": { "type": "string" } },
+        "schedule": { "type": "string" }
+      },
+      "required": ["name", "studentIds", "schedule"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record for a student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "absent"] },
+        "markedBy": { "type": "string" },
+        "markedAt": { "type": "number" }
+      },
+      "required": ["userId", "groupId", "date", "status", "markedBy", "markedAt"]
+    },
+    "Result": {
+      "title": "Result",
+      "description": "Score assigned by admin to a student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "subject": { "type": "string" },
+        "type": { "type": "string", "enum": ["daily", "monthly", "test"] },
+        "note": { "type": "string" }
+      },
+      "required": ["userId", "date", "score", "maxScore", "subject", "type"]
+    },
+    "Test": {
+      "title": "Test",
+      "description": "A quiz or test created by admin.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "groupId": { "type": "string" },
+        "questions": { "type": "array" },
+        "createdAt": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["title", "groupId", "questions", "createdAt", "createdBy", "isActive"]
+    },
+    "TestResult": {
+      "title": "Test Result",
+      "description": "Student's attempt on a test.",
+      "type": "object",
+      "properties": {
+        "testId": { "type": "string" },
+        "userId": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "answers": { "type": "array" },
+        "submittedAt": { "type": "number" }
+      },
+      "required": ["testId", "userId", "score", "totalQuestions", "answers", "submittedAt"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Monthly payment status for a student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "month": { "type": "string" },
+        "status": { "type": "string", "enum": ["paid", "debt", "pending"] },
+        "amount": { "type": "number" },
+        "paidAt": { "type": "number" },
+        "markedBy": { "type": "string" }
+      },
+      "required": ["userId", "month", "status", "amount"]
+    },
+    "AdminConfig": {
+      "title": "Admin Config",
+      "description": "Global admin configuration.",
+      "type": "object",
+      "properties": {
+        "centerName": { "type": "string" },
+        "adminPhone": { "type": "string" },
+        "adminCode": { "type": "string" },
+        "eskizEmail": { "type": "string" },
+        "eskizPassword": { "type": "string" },
+        "smsEnabled": { "type": "boolean" }
+      },
+      "required": ["centerName", "adminCode"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Store users (admin and students)."
+    },
+    "/groups/{groupId}": {
+      "schema": { "$ref": "#/entities/Group" },
+      "description": "Store groups/classes."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/Attendance" },
+      "description": "Daily attendance marking."
+    },
+    "/results/{resultId}": {
+      "schema": { "$ref": "#/entities/Result" },
+      "description": "Daily/monthly/test scores manually inputted."
+    },
+    "/tests/{testId}": {
+      "schema": { "$ref": "#/entities/Test" },
+      "description": "Online tests."
+    },
+    "/test_results/{testResultId}": {
+      "schema": { "$ref": "#/entities/TestResult" },
+      "description": "Submitted test scores."
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/Payment" },
+      "description": "Monthly payments."
+    },
+    "/adminConfig/{configId}": {
+      "schema": { "$ref": "#/entities/AdminConfig" },
+      "description": "Platform configuration."
+    }
+  }
+}

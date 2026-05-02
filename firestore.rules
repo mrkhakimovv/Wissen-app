@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() { return request.auth != null; }
+    
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    function getStudentId() {
+      let mapping = get(/databases/$(database)/documents/authMap/$(request.auth.uid));
+      return mapping != null ? mapping.data.studentId : "UNKNOWN_STUDENT";
+    }
+
+    match /admins/{uid} {
+      allow read: if request.auth.uid == uid;
+      allow write: if request.auth.uid == uid &&
+        request.resource.data.adminCode == get(/databases/$(database)/documents/adminConfig/main).data.adminCode;
+    }
+
+    match /authMap/{uid} {
+       allow read: if request.auth.uid == uid;
+       allow write: if request.auth.uid == uid && 
+         get(/databases/$(database)/documents/users/$(request.resource.data.studentId)).data.accessCode == request.resource.data.accessCode;
+    }
+
+    match /users/{userId} {
+      // Allow read so users can query their username/password to find their document ID
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /attendance/{id} {
+      allow read: if isAdmin() || resource.data.userId == getStudentId();
+      allow write: if isAdmin();
+    }
+
+    match /results/{id} {
+      allow read: if isAdmin() || resource.data.userId == getStudentId();
+      allow write: if isAdmin();
+    }
+
+    match /tests/{testId} {
+      allow read: if isAdmin() || (
+        resource.data.isActive == true && 
+        get(/databases/$(database)/documents/users/$(getStudentId())).data.groupId == resource.data.groupId
+      );
+      allow write: if isAdmin();
+    }
+
+    match /test_results/{id} {
+      allow read: if isAdmin() || resource.data.userId == getStudentId();
+      allow create: if isSignedIn() && request.resource.data.userId == getStudentId();
+      allow update, delete: if isAdmin();
+    }
+
+    match /payments/{id} {
+      allow read: if isAdmin() || resource.data.userId == getStudentId();
+      allow write: if isAdmin();
+    }
+
+    match /sms_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /adminConfig/main {
+      allow read, write: if isSignedIn();
+    }
+
+
+  }
+}
